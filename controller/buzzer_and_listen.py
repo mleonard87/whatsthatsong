@@ -1,8 +1,31 @@
 import RPi.GPIO as GPIO
 import speech_recognition as sr
-import time
 
-def capture_audio(player_id):
+import json
+import time
+import urllib2
+
+def request_buzz_in(player_id):
+    body = {
+        'player_id': player_id
+    }
+
+    req = urllib2.Request('http://192.168.1.144:8000/api/games/buzz_in/')
+    req.add_header('Content-Type', 'application/json')
+
+    response = urllib2.urlopen(req, json.dumps(body))
+
+def request_guess(guess):
+    body = {
+        'guess': guess
+    }
+
+    req = urllib2.Request('http://192.168.1.144:8000/api/games/make_guess/')
+    req.add_header('Content-Type', 'application/json')
+
+    response = urllib2.urlopen(req, json.dumps(body))
+
+def capture_guess(player_id):
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("Say something!")
@@ -13,11 +36,18 @@ def capture_audio(player_id):
         # for testing purposes, we're just using the default API key
         # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
         # instead of `r.recognize_google(audio)`
-        print("Player %d said: %s" % (player_id, r.recognize_google(audio)))
+        return r.recognize_google(audio)
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
     except sr.RequestError as e:
         print("Could not request results from Google Speech Recognition service; {0}".format(e))
+
+    return "Unknown"
+
+def process_button_press(button_id):
+    request_buzz_in(button_id)
+    guess = capture_guess(button_id)
+    request_guess(guess)
 
 GPIO.setmode(GPIO.BCM)
 
@@ -33,12 +63,12 @@ while True:
     input_state4 = GPIO.input(25)
 
     if input_state1 == False:
-        capture_audio(1)
+        process_button_press(1)
     if input_state2 == False:
-        capture_audio(2)
+        process_button_press(2)
     if input_state3 == False:
-        capture_audio(3)
+        process_button_press(3)
     if input_state4 == False:
-        capture_audio(4)
+        process_button_press(4)
 
     time.sleep(0.2)
