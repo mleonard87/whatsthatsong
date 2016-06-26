@@ -16,12 +16,12 @@ while True:
     input_state4 = GPIO.input(25)
 
     if input_state1 == False:
-        print('Player One')
+        print('1 (18)')
     if input_state2 == False:
-        print('Player Two')
+        print('2 (23)')
     if input_state3 == False:
-        print('Player Three')
+        print('3 (24)')
     if input_state4 == False:
-        print('Player Four')
+        print('4 (25)')
 
     time.sleep(0.2)
