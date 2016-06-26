@@ -1,10 +1,7 @@
 import RPi.GPIO as GPIO
 import speech_recognition as sr
 
-import json
-import time
-import urllib2
-import sys
+import json, time, urllib2, sys
 
 if len(sys.argv) == 1:
     print "Error:"
