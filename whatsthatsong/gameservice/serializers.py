@@ -7,6 +7,9 @@ class GameSerializer(serializers.ModelSerializer):
         fields = ('pk', 'started_datetime', 'track', 'winner')
 
     def create(self, request):
+        """
+        Overidden create method to able to the assignment of a random track.
+        """
         queue_size = len(GuessQueue.objects.all())
         if queue_size != 0:
             GuessQueue.objects.all()[0].delete()

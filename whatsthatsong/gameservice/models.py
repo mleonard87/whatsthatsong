@@ -6,6 +6,10 @@ from django.db.models import Count
 import random, string
 
 class Track(models.Model):
+    """
+    Model object representation a track that is available to guess. For example,
+    'Hotel California' by 'The Eagles'.
+    """
     artist = models.CharField(max_length=250)
     title = models.CharField(max_length=250)
     filename = models.CharField(max_length=510)
@@ -25,6 +29,8 @@ class Track(models.Model):
         """
         Take a search/match term for a track, lower case it and remove the
         punctuation.
+
+        :param raw_match_term: An unaltered match term to be cleaned.
         """
         for ch in '-\'!.':
             match_term = raw_match_term.replace(ch, '')
@@ -57,6 +63,9 @@ class Track(models.Model):
 
 
 class Game(models.Model):
+    """
+    A model object representing an instance of a game being played.
+    """
     PLAYER_CHOICES = (
         ('PLAYER_ONE',   u'Player One'),
         ('PLAYER_TWO',   u'Player Two'),
@@ -69,5 +78,10 @@ class Game(models.Model):
     winner = models.CharField(max_length=20, choices=PLAYER_CHOICES, null=True, blank=True)
 
 class GuessQueue(models.Model):
+    """
+    This acts a queue (although realistically it only ever has one item in it at
+    a time). This tracks when a buzzer has been pressed and what artist/track
+    title has been guessed.
+    """
     player = models.IntegerField()
     guess = models.CharField(max_length=1000, null=True, blank=True)

@@ -15,6 +15,10 @@ class GameViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['post'])
     def buzz_in(self, request):
+        """
+        This method is called by the controller when a button is pressed and
+        queues the player to await a guess to be made.
+        """
         queue_size = len(GuessQueue.objects.all())
         if queue_size == 0:
             data = JSONParser().parse(request)
@@ -27,6 +31,11 @@ class GameViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['post'])
     def make_guess(self, request):
+        """
+        Following a player "buzzing in" this should be called to supply that
+        players guess having been speech recognised. This adds the guess to the
+        queued player.
+        """
         data = JSONParser().parse(request)
         queue = GuessQueue.objects.all()[0]
         queue.guess = data.get('guess')
@@ -36,6 +45,12 @@ class GameViewSet(viewsets.ModelViewSet):
 
     @detail_route()
     def state(self, request, pk=None):
+        """
+        Return the state of the game with the id supplied by "pk". State returns
+        whether a buzzer has been pressed via a non-zero number in
+        'guess_player_id'. What the current guess is and whether or not the
+        guess was correct in the 'guess_state' property.
+        """
         game = get_object_or_404(Game, pk=pk)
 
         response_data = {
@@ -44,8 +59,12 @@ class GameViewSet(viewsets.ModelViewSet):
             'guess_status': 'WRONG',
         }
 
+        # There will only ever be one guess in the queue so here we're just
+        # essentially testing if its empty or not. If the queue is empty we
+        # dont need to do anything and just return the default game state.
         all_guesses = GuessQueue.objects.all()
         if len(all_guesses) == 1:
+            # We found a player in the queue so set up the appropriate response.
             guess = all_guesses[0]
             response_data['guess_player_id'] = guess.player
             response_data['guess'] = guess.guess
@@ -56,11 +75,12 @@ class GameViewSet(viewsets.ModelViewSet):
                 search_guess = ',%s,' % Track.normalize_match_term(guess.guess)
                 match_terms = game.track.match_terms
 
-                # Try and find the guess in the possible match terms., if its
+                # Try and find the guess in the possible match terms, if its
                 # found then the guess was correct.
                 if match_terms.find(search_guess) >= 0:
                     response_data['guess_status'] = 'CORRECT'
 
+                # This guess has now been processed so remove it from the queue.
                 guess.delete()
 
         return Response(response_data)
@@ -70,6 +90,9 @@ class TrackViewSet(viewsets.ModelViewSet):
     serializer_class = TrackSerializer
 
 def game_ui(request):
+    """
+    Return the single page web app that is the game UI.
+    """
     return render_to_response(
         'whatsthatsong.html',
         context_instance=RequestContext(request)
