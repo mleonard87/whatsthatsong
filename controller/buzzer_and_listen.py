@@ -4,6 +4,15 @@ import speech_recognition as sr
 import json
 import time
 import urllib2
+import sys
+
+if len(sys.argv) == 1:
+    print "Error:"
+    print "  You must supply a game service server."
+    print "  Usage: python buzzer_and_listen.py <host_name_or_ip_and_port>"
+    sys.exit(1)
+
+GAME_SERVICE_SERVER = sys.argv[1]
 
 def request_buzz_in(player_id):
     print 'BUZZ %d' % player_id
@@ -11,7 +20,7 @@ def request_buzz_in(player_id):
         'player_id': player_id
     }
 
-    req = urllib2.Request('http://192.168.1.144:8000/api/games/buzz_in/')
+    req = urllib2.Request('http://%s/api/games/buzz_in/' % GAME_SERVICE_SERVER)
     req.add_header('Content-Type', 'application/json')
 
     response = urllib2.urlopen(req, json.dumps(body))
@@ -22,7 +31,7 @@ def request_guess(guess):
         'guess': guess
     }
 
-    req = urllib2.Request('http://192.168.1.144:8000/api/games/make_guess/')
+    req = urllib2.Request('http://%s/api/games/make_guess/' % GAME_SERVICE_SERVER)
     req.add_header('Content-Type', 'application/json')
 
     response = urllib2.urlopen(req, json.dumps(body))
