@@ -1,4 +1,4 @@
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 
 from rest_framework import viewsets
@@ -36,11 +36,12 @@ class GameViewSet(viewsets.ModelViewSet):
 
     @detail_route()
     def state(self, request, pk=None):
-        print 'game state %s' % pk
+        game = get_object_or_404(Game, pk=pk)
 
         response_data = {
             'guess_player_id': 0,
-            'guess': ''
+            'guess': '',
+            'guess_status': 'WRONG',
         }
 
         all_guesses = GuessQueue.objects.all()
@@ -49,8 +50,16 @@ class GameViewSet(viewsets.ModelViewSet):
             response_data['guess_player_id'] = guess.player
             response_data['guess'] = guess.guess
 
-            if guess.guess is not None:
-                guess.delete()
+            if guess.guess != "" and guess.guess is not None:
+                track = game.track
+                lower_guess = guess.guess.lower()
+                lower_artist = track.artist.lower()
+                lower_title = track.title.lower()
+
+                if lower_artist == lower_guess or lower_title == lower_guess:
+                    response_data['guess_status'] = 'CORRECT'
+
+                guess.delete()                
 
         return Response(response_data)
 
