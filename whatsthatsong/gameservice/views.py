@@ -51,15 +51,17 @@ class GameViewSet(viewsets.ModelViewSet):
             response_data['guess'] = guess.guess
 
             if guess.guess != "" and guess.guess is not None:
-                track = game.track
-                lower_guess = guess.guess.lower()
-                lower_artist = track.artist.lower()
-                lower_title = track.title.lower()
+                # Lower case and remove punctuation as per the rules defined in
+                # the normalize_match_term method.
+                search_guess = ',%s,' % Track.normalize_match_term(guess.guess)
+                match_terms = game.track.match_terms
 
-                if lower_artist == lower_guess or lower_title == lower_guess:
+                # Try and find the guess in the possible match terms., if its
+                # found then the guess was correct.
+                if match_terms.find(search_guess) >= 0:
                     response_data['guess_status'] = 'CORRECT'
 
-                guess.delete()                
+                guess.delete()
 
         return Response(response_data)
 
