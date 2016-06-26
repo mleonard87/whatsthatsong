@@ -6,6 +6,7 @@ import time
 import urllib2
 
 def request_buzz_in(player_id):
+    print 'BUZZ %d' % player_id
     body = {
         'player_id': player_id
     }
@@ -16,6 +17,7 @@ def request_buzz_in(player_id):
     response = urllib2.urlopen(req, json.dumps(body))
 
 def request_guess(guess):
+    print 'Guess %s' % guess
     body = {
         'guess': guess
     }
@@ -28,7 +30,7 @@ def request_guess(guess):
 def capture_guess(player_id):
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        print("Say something!")
+        print("Speak...")
         audio = r.listen(source)
 
     # recognize speech using Google Speech Recognition
@@ -42,7 +44,7 @@ def capture_guess(player_id):
     except sr.RequestError as e:
         print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
-    return "Unknown"
+    return "[UNKNOWN]"
 
 def process_button_press(button_id):
     request_buzz_in(button_id)
