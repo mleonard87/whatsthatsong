@@ -94,3 +94,6 @@ include
 lib
 .Python
 .vagrant
+whatsthatsong/gameservice/static/media
+db.sqlite3
+pip-selfcheck.json
