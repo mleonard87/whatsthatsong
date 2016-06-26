@@ -1,76 +1,171 @@
+{% load staticfiles %}
 <!doctype html>
 <html>
   <head>
     <title>Whats That Song</title>
+    <link href="{% static "css/montserrat.css" %}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{% static "css/style.css" %}" />
   </head>
   <body>
-    <h1>Whats that song?</h1>
+
     <div class="wrapper">
-      <div class="new-game">
+      <header>
+        <h1>Whats That Song?</h1>
+      </header>
+
+      <div id="new-game-container" class="new-game-container">
         <button id="new-game-button">New Game</button>
       </div>
-      <div id="game-in-progress-container" class="game-in-progress" style="display: none;">
-        <div class="track">
-          Track art here
+
+      <div id="game-container" class="game-in-progress" style="display: none;">
+        <div id="track-container" class="track hide">
+          <img id="album-art" width="300" height="300" />
+          <div class="track-info">
+            <span id="artist" class="artist">Britney Spears</span>
+            <span id="track-title" class="track-title">Hit Me Baby</span>
+          </div>
         </div>
-        <div id="latest-guess-container" class="latest-guess">
+        <div id="latest-guess-container" class="latest-guess-container">
+          <span id="latest-guess"></span>
         </div>
         <div class="players">
-          <div id="p1" class="player" data-player-id="1">
+          <div id="p1" class="player">
             Player One
           </div>
-          <div id="p2" class="player" data-player-id="2">
+          <div id="p2" class="player">
             Player Two
           </div>
-          <div id="p3" class="player" data-player-id="3">
+          <div id="p3" class="player">
             Player Three
           </div>
-          <div id="p4" class="player" data-player-id="4">
+          <div id="p4" class="player">
             Player Four
+          </div>
+          <div id="p-new-game" class="player new-game" style="display: none;">
+            New Game
           </div>
         </div>
       </div>
     </div>
     <script type="text/javascript">
-var newGameButton = document.getElementById('new-game-button');
-var gameContainer = document.getElementById('game-in-progress-container');
-var latestGuessContainer = document.getElementById('latest-guess-container');
 var pollInterval;
+var trackAudio;
 
-newGameButton.addEventListener('click', function() {
+function newGame() {
+  // POST to the rest API to create a new game.
   fetch('/api/games/', { method: 'POST' })
   .then(function(response) {
     return response.json();
   })
-  .then(function(json) {
-    newGameButton.style.display = 'none';
-    gameContainer.style.display = 'block';
+  .then(function(gameJson) {
+    // Now fetch the info about the track for this game.
+    fetch('/api/tracks/' + gameJson.track + '/')
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(trackJson) {
+      document.getElementById('album-art').src = '/static/media/' + trackJson.filename + '.jpg';
+      document.getElementById('artist').innerText = trackJson.artist;
+      document.getElementById('track-title').innerText = trackJson.title;
 
-    pollInterval = setInterval(
-      function() {
-        fetch('/api/games/1/state')
-        .then(function(response) {
-          return response.json();
-        })
-        .then(function(json) {
-          latestGuessContainer.innerText = 'You guessed: ' + json.guess;
+      // Hide the new game container and show the actual game in progress.
+      document.getElementById('new-game-container').style.display = 'none';
+      document.getElementById('game-container').style.display = 'block';
 
-          document.getElementById('p1').style.fontWeight = 'normal';
-          document.getElementById('p2').style.fontWeight = 'normal';
-          document.getElementById('p3').style.fontWeight = 'normal';
-          document.getElementById('p4').style.fontWeight = 'normal';
+      trackAudio = new Audio('/static/media/' + trackJson.filename + '.mp3');
+      trackAudio.play();
 
-          document.getElementById('p' + json.guess_player_id).style.fontWeight = 'bold';
-          console.log('Player ' + json.guess_player_id + ' guessed: ' + json.guess);
-
-          if (json.guess !== null) {
-            clearInterval(pollInterval);
-          }
-        });
-      }
-    , 1000);
-
+      pollGameState(gameJson.pk);
+    });
   });
+}
+
+function pollGameState(gameId) {
+  pollInterval = setInterval(
+    function() {
+      fetch('/api/games/' + gameId + '/state/')
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(gameJson) {
+        var latestGuess = document.getElementById('latest-guess');
+        var latestGuessContainer = document.getElementById('latest-guess-container');
+        if (gameJson.guess_player_id === 0) {
+          trackAudio.play();
+          document.getElementById('p1').classList.remove('active');
+          document.getElementById('p2').classList.remove('active');
+          document.getElementById('p3').classList.remove('active');
+          document.getElementById('p4').classList.remove('active');
+          latestGuessContainer.classList.remove('wrong');
+          latestGuessContainer.classList.remove('correct');
+          latestGuess.innerText = 'Press your buzzer and shout the artist or title';
+          latestGuess.classList.add('help-text');
+        } else {
+          trackAudio.pause();
+          document.getElementById('p' + gameJson.guess_player_id).classList.add('active');
+
+          if (gameJson.guess === "" || gameJson.guess === null) {
+            latestGuess.innerText = 'Shout the artist or title';
+          } else {
+            if (gameJson.guess === '[UNKNOWN]') {
+              latestGuess.innerText = "Sorry, didn't catch that";
+            } else {
+              latestGuess.innerText = 'Wrong! You guessed: ' + gameJson.guess;
+            }
+            latestGuess.classList.remove('help-text');
+            latestGuessContainer.classList.add('wrong');
+            latestGuessContainer.classList.remove('correct');
+          }
+        }
+
+        if (gameJson.guess !== "" && gameJson.guess !== null) {
+          clearInterval(pollInterval);
+          if (gameJson.guess_status === 'WRONG') {
+            setTimeout(function() {
+              pollGameState(gameId);
+            }, 3000);
+          } else {
+            document.getElementById('track-container').classList.remove('hide');
+            trackAudio.play();
+            latestGuess.innerText = 'Winner - Player ' + gameJson.guess_player_id + ' in ' + Math.round(trackAudio.currentTime) + ' seconds';
+            latestGuessContainer.classList.add('correct');
+            latestGuessContainer.classList.remove('wrong');
+
+
+            document.getElementById('p1').style.display = 'none';
+            document.getElementById('p2').style.display = 'none';
+            document.getElementById('p3').style.display = 'none';
+            document.getElementById('p4').style.display = 'none';
+            document.getElementById('p-new-game').style.display = 'block';
+          }
+        }
+      });
+    }
+  , 500);
+}
+
+function resetGame() {
+  trackAudio.pause();
+  trackAudio = null;
+  document.getElementById('p1').style.display = 'block';
+  document.getElementById('p2').style.display = 'block';
+  document.getElementById('p3').style.display = 'block';
+  document.getElementById('p4').style.display = 'block';
+  document.getElementById('p-new-game').style.display = 'none';
+  document.getElementById('p1').classList.remove('active');
+  document.getElementById('p2').classList.remove('active');
+  document.getElementById('p3').classList.remove('active');
+  document.getElementById('p4').classList.remove('active');
+  document.getElementById('latest-guess').innerText = '';
+  document.getElementById('latest-guess-container').classList.remove('correct');
+  document.getElementById('latest-guess-container').classList.remove('wrong');
+  document.getElementById('track-container').classList.add('hide');
+}
+
+document.getElementById('new-game-button').addEventListener('click', newGame);
+document.getElementById('p-new-game').addEventListener('click', function() {
+  resetGame();
+  newGame();
 });
     </script>
   </body>
