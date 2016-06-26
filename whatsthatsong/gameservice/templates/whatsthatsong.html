@@ -123,7 +123,7 @@ function pollGameState(gameId) {
           if (gameJson.guess_status === 'WRONG') {
             setTimeout(function() {
               pollGameState(gameId);
-            }, 3000);
+            }, 2000);
           } else {
             document.getElementById('track-container').classList.remove('hide');
             trackAudio.play();
