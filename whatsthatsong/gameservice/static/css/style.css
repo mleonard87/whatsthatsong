@@ -203,3 +203,87 @@ header {
   font-size: 0.8em;
   font-style: italic;
 }
+
+.round-button-container {
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  padding: 2em;
+}
+
+.round-button {
+	/*width: 90%;*/
+}
+
+.round-button-circle {
+	width: 100%;
+	height:0;
+	padding-bottom: 100%;
+  border-radius: 50%;
+	border:10px solid #cfdcec;
+  overflow:hidden;
+
+  background: rgb(215, 137, 2);
+  box-shadow: 0 0 3px gray;
+}
+
+.round-button-circle:hover {
+	background: rgb(162, 105, 6);
+}
+
+.round-button span {
+  display: block;
+	float: left;
+	width: 100%;
+	padding-top: 50%;
+  padding-bottom: 50%;
+	line-height: 1em;
+	margin-top: -0.5em;
+
+	text-align: center;
+	color: #e2eaf3;
+  font-size: 1.2em;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 5em;
+}
+
+.hidden {
+  display: none;
+}
+
+.player-name-form {
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+.player-name-form input {
+  display: block;
+  width: 100%;
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.player-name-form input[type='submit'] {
+  border: 3px solid rgb(215, 137, 2);
+  background-color: rgb(30, 30, 30);
+  font-size: 1em;
+  color: rgb(255, 255, 255);
+  padding: 1em 2em;
+  border-radius: 2em;
+  margin-top: 2em;
+}
+
+.player-name-form input[type='submit']:hover {
+  background-color: rgb(215, 137, 2);
+  color: rgb(0, 0, 0);
+  cursor: pointer;
+}
+
+.waiting-for-game,
+.guess-help {
+  display: block;
+  text-align: center;
+  margin-top: 2em;
+  font-size: 2em;
+}

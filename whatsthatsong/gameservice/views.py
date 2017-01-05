@@ -77,6 +77,9 @@ class GameViewSet(viewsets.ModelViewSet):
 
                 # Try and find the guess in the possible match terms, if its
                 # found then the guess was correct.
+                print match_terms
+                print search_guess
+
                 if match_terms.find(search_guess) >= 0:
                     response_data['guess_status'] = 'CORRECT'
 

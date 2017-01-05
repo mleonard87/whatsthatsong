@@ -1,0 +1,200 @@
+{% load staticfiles %}
+<!doctype html>
+<html>
+  <head>
+    <title>Whats That Song</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="{% static "css/montserrat.css" %}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{% static "css/style.css" %}" />
+  </head>
+  <body>
+
+    <div class="wrapper">
+
+      <div id="set-name-container">
+        <header>
+          <h1>Set Name</h1>
+        </header>
+        <form id="set-name-form" class="player-name-form">
+          <input id="player-name" type="text" placeholder="Name" autocomplete="off" />
+          <input type="submit" value="Join Game" />
+        </form>
+      </div>
+
+      <div id="controller-container" style="display: none">
+        <header>
+          <h1><span id="player-name-title"></span></h1>
+        </header>
+        <div id="waiting-container">
+          <p class="waiting-for-game">
+            Waiting for a game to start...
+          </p>
+        </div>
+        <div id="guess-help-container" class="hidden">
+          <p class="guess-help">
+            Shout the artist or title
+          </p>
+        </div>
+        <div class="round-button-container">
+          <div id="buzzer-button" class="round-button hidden">
+            <div class="round-button-circle">
+              <span>Buzz!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+  <script type="text/javascript">
+    var currentGameId = null;
+    var playerName = null;
+
+    document.getElementById('set-name-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      playerName = document.getElementById('player-name').value;
+      if (playerName === '') {
+        alert("You must enter a name.");
+        return;
+      }
+      console.log(playerName);
+      game_socket.send(JSON.stringify({
+        'action': 'PLAYER_JOIN',
+        'player': playerName,
+      }));
+
+      document.getElementById('set-name-container').style.display = 'none';
+      document.getElementById('controller-container').style.display = 'block';
+      document.getElementById('player-name-title').innerHTML = playerName;
+    });
+
+    var game_socket = new WebSocket('ws://' + window.location.host + "/ws/controller");
+
+    game_socket.onopen = function (event) {
+      if (playerName !== null) {
+        game_socket.send(JSON.stringify({
+          'action': 'PLAYER_JOIN',
+          'player': playerName,
+        }));
+      }
+    };
+
+    window.onunload = function() {
+      if (playerName !== null) {
+        game_socket.send(JSON.stringify({
+          'action': 'PLAYER_LEAVE',
+          'player': playerName,
+        }));
+      }
+    }
+
+    game_socket.onmessage = wsOnMessage;
+
+    function wsOnMessage(message) {
+      console.log(message.data);
+      var data = JSON.parse(message.data);
+      if (data.action === 'GAME_START') {
+        handleGameStart(data.gameId);
+      } else if (data.action === 'GAME_END') {
+        handleGameEnd();
+      } else if (data.action === 'GAME_LOAD') {
+        handleGameLoad();
+      } else if (data.action === 'GAME_ANNOUNCE_ID') {
+        handleGameAnnounceId(data.gameId);
+      } else if (data.action === 'GAME_RESUME') {
+        handleGameResume(data.gameId);
+      }
+    }
+
+    function handleGameStart(gameId) {
+      document.getElementById('buzzer-button').classList.remove('hidden');
+      document.getElementById('waiting-container').classList.add('hidden');
+      document.getElementById('guess-help-container').classList.add('hidden');
+      if (currentGameId === null && playerName !== null) {
+        game_socket.send(JSON.stringify({
+          'action': 'PLAYER_JOIN',
+          'player': playerName,
+        }));
+      }
+      currentGameId = gameId;
+    }
+
+    function handleGameLoad() {
+      if (playerName !== null) {
+        game_socket.send(JSON.stringify({
+          'action': 'PLAYER_JOIN',
+          'player': playerName,
+        }));
+      }
+    }
+
+    function handleGameEnd() {
+      currentGameId = null;
+      document.getElementById('buzzer-button').classList.add('hidden');
+      document.getElementById('waiting-container').classList.remove('hidden');
+      document.getElementById('guess-help-container').classList.add('hidden');
+    }
+
+    function handleGameAnnounceId(gameId) {
+      document.getElementById('buzzer-button').classList.remove('hidden');
+      document.getElementById('waiting-container').classList.add('hidden');
+      document.getElementById('guess-help-container').classList.add('hidden');
+      currentGameId = gameId;
+    }
+
+    function handleGameResume(gameId) {
+      document.getElementById('buzzer-button').classList.remove('hidden');
+      document.getElementById('waiting-container').classList.add('hidden');
+      document.getElementById('guess-help-container').classList.add('hidden');
+      currentGameId = gameId;
+    }
+
+    var guessTimeout = null;
+
+    function processSpeechResult(event) {
+      if (guessTimeout !== null) {
+        clearTimeout(guessTimeout);
+        guessTimeout = null
+      }
+
+      var guess = event.results[0][0].transcript;
+
+      game_socket.send(JSON.stringify({
+        'action': 'PLAYER_GUESS',
+        'player': playerName,
+        'guess': guess,
+        'gameId': currentGameId,
+      }));
+    }
+
+
+
+    function clickBuzzer() {
+      game_socket.send(JSON.stringify({
+        'action': 'PLAYER_BUZZ_IN',
+        'player': playerName,
+      }));
+
+      document.getElementById('buzzer-button').classList.add('hidden');
+      document.getElementById('guess-help-container').classList.remove('hidden');
+
+      var recognition = new webkitSpeechRecognition();
+      recognition.onresult = processSpeechResult;
+      recognition.onspeechend = function(event) {
+        guessTimeout = setTimeout(clearGuess, 1000);
+      }
+      recognition.start();
+    }
+
+    function clearGuess() {
+      game_socket.send(JSON.stringify({
+        'action': 'PLAYER_GUESS',
+        'player': playerName,
+        'guess': '[UNKNOWN]',
+        'gameId': currentGameId,
+      }));
+    }
+
+    document.getElementById('buzzer-button').addEventListener('click', clickBuzzer);
+  </script>
+</html>

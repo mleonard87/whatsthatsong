@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gameservice',
+    'gamecontroller',
     'rest_framework',
+    'channels',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -121,3 +123,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
+
+GAME_SERVICE_SERVER = 'localhost:8000'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "gameservice.routing.channel_routing",
+    },
+}

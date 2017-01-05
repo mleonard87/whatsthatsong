@@ -32,8 +32,9 @@ class Track(models.Model):
 
         :param raw_match_term: An unaltered match term to be cleaned.
         """
-        for ch in '-\'!.':
-            match_term = raw_match_term.replace(ch, '')
+        match_term = raw_match_term
+        for ch in "-'!.":
+            match_term = match_term.replace(ch, '')
 
         match_term = match_term.lower()
 

@@ -23,5 +23,6 @@ router.register(r'tracks', TrackViewSet)
 
 urlpatterns = [
     url(r'^', include('gameservice.urls')),
+    url(r'^controller/', include('gamecontroller.urls')),
     url(r'^api/', include(router.urls)),
 ]
