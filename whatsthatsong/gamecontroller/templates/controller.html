@@ -28,7 +28,17 @@
         <div id="waiting-container">
           <p class="waiting-for-game">
             Waiting for a game to start...
+            <br/>
+            <br/>
+            OR
           </p>
+          <br/>
+          <br/>
+          <div id="new-game-container" class="players">
+            <div id="p-new-game" class="player new-game">
+              New Game
+            </div>
+          </div>
         </div>
         <div id="guess-help-container" class="hidden">
           <p class="guess-help">
@@ -69,6 +79,11 @@
     });
 
     var game_socket = new WebSocket('ws://' + window.location.host + "/ws/controller");
+
+    document.getElementById('p-new-game').addEventListener('click', function(event) {
+      event.preventDefault();
+      game_socket.send(JSON.stringify({'action': 'GAME_NEW'}));
+    })
 
     game_socket.onopen = function (event) {
       if (playerName !== null) {
