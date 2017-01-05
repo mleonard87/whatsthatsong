@@ -68,6 +68,13 @@ def ws_receive(message):
             'player': data['player'],
         }
         Group('game').send({'text': json.dumps(m)})
+
+        m = {
+            'action': 'PLAYER_BUZZ_IN',
+            'player': data['player'],
+        }
+        Group('controller').send({'text': json.dumps(m)})
+
         return
 
     if data['action'] == 'PLAYER_GUESS':

@@ -118,6 +118,8 @@
         handleGameAnnounceId(data.gameId);
       } else if (data.action === 'GAME_RESUME') {
         handleGameResume(data.gameId);
+      } else if (data.action === 'PLAYER_BUZZ_IN') {
+        handlePlayerBuzzIn(data.playerName);
       }
     }
 
@@ -162,6 +164,10 @@
       document.getElementById('waiting-container').classList.add('hidden');
       document.getElementById('guess-help-container').classList.add('hidden');
       currentGameId = gameId;
+    }
+
+    function handlePlayerBuzzIn(playerName) {
+      document.getElementById('buzzer-button').classList.add('hidden');
     }
 
     var guessTimeout = null;
